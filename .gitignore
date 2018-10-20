@@ -1,0 +1,8 @@
+certs
+**/vendor
+**/node_modules
+
+gen_config
+config.json
+
+.DS_Store
