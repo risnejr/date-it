@@ -4,15 +4,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/SKF/go-enlight-sdk/services/pas"
 	"github.com/SKF/go-utility/log"
-	"google.golang.org/grpc/status"
 
 	"github.com/SKF/go-enlight-sdk/grpc"
 	"github.com/SKF/go-enlight-sdk/services/iot"
@@ -123,11 +122,10 @@ func DialPAS() pas.PointAlarmStatusClient {
 func Stream(w http.ResponseWriter, r *http.Request) {
 	// Get functional location and asset from url parameters
 	query := r.URL.Query()
-	funcLoc := query["func_loc"][0]
-	asset := query["asset"][0]
+	uuid := query["uuid"][0]
 
 	fmt.Printf("%v request from %v ", r.Method, r.Header.Get("origin"))
-	fmt.Printf("is now streaming values from:\n\t* Functional location: %v\n\t* Asset: %v\n\n", funcLoc, asset)
+	fmt.Printf("is now streaming values from:\n\t* UUID: %v\n\n", uuid)
 
 	// Make sure that streaming is supported
 	flusher, ok := w.(http.Flusher)
@@ -140,15 +138,6 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	// Read config file and extract corresponding node ids
-	jsonConfig, err := ioutil.ReadFile("../config.json")
-	if err != nil {
-		log.Error(err)
-	}
-	var config Config
-	json.Unmarshal(jsonConfig, &config)
-	nodeIDs := config[funcLoc][asset]
 
 	// Dial and defer connection with gRPC server
 	iotClient := DialIoT()
@@ -170,99 +159,36 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 
 	id := 0
 
-	// GetLatestNodeData from every nodeID and send them over SSE
-	for pointName, pointID := range nodeIDs {
+	// Poll data from UUID every second
+	for {
 		select {
 		case <-clientGone:
 			fmt.Printf("Client %v disconnected from the feed...\n\n", r.RemoteAddr)
 			return
 		default:
-			// Make sure to ignore IDs which begin and ends with "__"
-			if string(pointName[:2]) != "__" && string(pointName[len(pointName)-2:]) != "__" {
-				latestInput := iotapi.GetLatestNodeDataInput{NodeId: pointID, ContentType: 1}
-				latestOutput, err := iotClient.GetLatestNodeData(latestInput)
-				if err != nil {
-					log.Error(err)
-				}
-				pointData := latestOutput.DataPoint
-
-				latestAlarmInput := pasapi.GetPointAlarmStatusInput{NodeId: pointID}
-				latestAlarm, err := pasClient.GetPointAlarmStatus(latestAlarmInput)
-				if err != nil {
-					log.Error(err)
-				}
-
-				jsonData := map[string]interface{}{"node_data": pointData, "point_name": pointName, "alarm_status": latestAlarm}
-				sseData, _ := json.Marshal(jsonData)
-				if *verbose {
-					fmt.Printf("id: %v\ndata: %s\n\n", id, string(sseData))
-				}
-				fmt.Fprintf(w, "id: %v\ndata: %s\n\n", id, string(sseData))
-				flusher.Flush()
-				id++
+			latestInput := iotapi.GetLatestNodeDataInput{NodeId: uuid, ContentType: 1}
+			latestOutput, err := iotClient.GetLatestNodeData(latestInput)
+			if err != nil {
+				log.Error(err)
 			}
-		}
+			pointData := latestOutput.DataPoint
 
-	}
-
-	// Setup in and outputs of GetNodeDataStream
-	input := iotapi.GetNodeDataStreamInput{}
-	stream := make(chan iotapi.GetNodeDataStreamOutput)
-
-	go func() {
-		for {
-			select {
-			case <-clientGone:
-				return
-			default:
-				err = iotClient.GetNodeDataStream(input, stream)
-				if err != nil {
-					log.Error(err)
-					st, _ := status.FromError(err)
-					// Retry if status code is Unavailable (14)
-					// TODO add exponential backoff and retry
-					if st.Code() == 14 {
-						iotClient = DialIoT()
-					}
-				}
+			latestAlarmInput := pasapi.GetPointAlarmStatusInput{NodeId: uuid}
+			latestAlarm, err := pasClient.GetPointAlarmStatus(latestAlarmInput)
+			if err != nil {
+				log.Error(err)
 			}
-		}
-	}()
 
-	// Listen to stream and filter on correct IDs and send data over SSE
-	for {
-		select {
-		case data := <-stream:
-			for pointName, pointID := range nodeIDs {
-				if data.NodeId == pointID {
-					pointData := data.NodeData.DataPoint
-					alarmInput := pasapi.GetPointAlarmStatusInput{NodeId: pointID}
-					alarm, err := pasClient.GetPointAlarmStatus(alarmInput)
-					if err != nil {
-						log.Error(err)
-						st, _ := status.FromError(err)
-						// Retry if status code is Unavailable (14)
-						// TODO add exponential backoff and retry
-						if st.Code() == 14 {
-							pasClient = DialPAS()
-						}
-					}
-
-					jsonData := map[string]interface{}{"node_data": pointData, "point_name": pointName, "alarm_status": alarm}
-					sseData, _ := json.Marshal(jsonData)
-					if *verbose {
-						fmt.Printf("id: %v\ndata: %s\n\n", id, string(sseData))
-					}
-					fmt.Fprintf(w, "id: %v\ndata: %s\n\n", id, string(sseData))
-					flusher.Flush()
-					id++
-
-				}
+			jsonData := map[string]interface{}{"node_data": pointData, "alarm_status": latestAlarm}
+			sseData, _ := json.Marshal(jsonData)
+			if *verbose {
+				fmt.Printf("id: %v\ndata: %s\n\n", id, string(sseData))
 			}
-		case <-clientGone:
-			fmt.Printf("Client %v disconnected from the feed...\n\n", r.RemoteAddr)
-			return
+			fmt.Fprintf(w, "id: %v\ndata: %s\n\n", id, string(sseData))
+			flusher.Flush()
+			id++
 		}
+		time.Sleep(time.Second)
 	}
 }
 
