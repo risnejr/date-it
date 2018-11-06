@@ -157,6 +157,8 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 		os.Exit(1)
 	}()
 
+	var createdAtTmp int64
+	createdAtTmp = 0
 	id := 0
 
 	// Poll data from UUID every second
@@ -172,6 +174,7 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 				log.Error(err)
 			}
 			pointData := latestOutput.DataPoint
+			createdAt := latestOutput.CreatedAt
 
 			latestAlarmInput := pasapi.GetPointAlarmStatusInput{NodeId: uuid}
 			latestAlarm, err := pasClient.GetPointAlarmStatus(latestAlarmInput)
@@ -181,12 +184,15 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 
 			jsonData := map[string]interface{}{"node_data": pointData, "alarm_status": latestAlarm}
 			sseData, _ := json.Marshal(jsonData)
-			if *verbose {
-				fmt.Printf("id: %v\ndata: %s\n\n", id, string(sseData))
+			if createdAt > createdAtTmp {
+				if *verbose {
+					fmt.Printf("id: %v\ndata: %s\n\n", id, string(sseData))
+				}
+				fmt.Fprintf(w, "id: %v\ndata: %s\n\n", id, string(sseData))
+				flusher.Flush()
+				createdAtTmp = createdAt
+				id++
 			}
-			fmt.Fprintf(w, "id: %v\ndata: %s\n\n", id, string(sseData))
-			flusher.Flush()
-			id++
 		}
 		time.Sleep(time.Second)
 	}
