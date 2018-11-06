@@ -3,11 +3,13 @@ import React, { Component } from "react";
 import "./App.css";
 import Trend from "./Components/Trend";
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.url = new URL(window.location.href);
-    this.uuid = this.url.searchParams.get("uuid");
+class App extends Component<{}> {
+  uuid: string | null;
+
+  constructor() {
+    super();
+    let url: URL = new URL(window.location.href);
+    this.uuid = url.searchParams.get("uuid");
   }
 
   render() {

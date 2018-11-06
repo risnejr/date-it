@@ -1,8 +1,22 @@
 // @flow
 import React, { Component } from "react";
 import { LineChart, Line, YAxis } from "recharts";
+import EventSource from "./EventSource.js";
 
-class Trend extends Component {
+type Props = {
+  uuid: string | null
+};
+
+type Coordinate = {
+  x: number,
+  y: Date
+};
+
+type State = {
+  coordinates: Array<Coordinate>
+};
+
+class Trend extends Component<Props, State> {
   constructor() {
     super();
     this.state = {
@@ -11,13 +25,21 @@ class Trend extends Component {
   }
 
   componentDidMount() {
-    let source = new EventSource(
+    if (this.props.uuid === null) {
+      return;
+    }
+
+    let source: EventSource = new EventSource(
       "http://localhost:5000?uuid=" + this.props.uuid
     );
-    let data = {};
+    let data: Object = {};
 
     source.onmessage = event => {
-      data = JSON.parse(event.data);
+      if (!(typeof event.data === typeof "")) {
+        return;
+      }
+      //$FlowFixMe
+      data = JSON.parse(event.data); //
       data.node_data.coordinate.x = new Date(data.node_data.coordinate.x);
       this.setState({
         coordinates: [
@@ -28,7 +50,7 @@ class Trend extends Component {
     };
   }
 
-  shiftIfBig(array) {
+  shiftIfBig(array: Array<Coordinate>): Array<Coordinate> {
     if (array.length >= 100) {
       array.shift();
     }
@@ -41,10 +63,10 @@ class Trend extends Component {
         <LineChart width={1600} height={850} data={this.state.coordinates}>
           <Line
             strokeWidth={3}
-            type="monotone"
+            type="basis"
             dataKey="y"
             stroke="#8884d8"
-            animationDuration={500}
+            animationDuration={2000}
             dot={false}
           />
           <YAxis type="number" domain={[18, 30]} />
