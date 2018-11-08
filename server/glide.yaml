@@ -1,0 +1,14 @@
+package: github.com/risnejr/date-it/server
+import:
+- package: github.com/SKF/go-enlight-sdk
+  subpackages:
+  - grpc
+  - services/iot
+  - services/pas
+- package: github.com/SKF/go-utility
+  subpackages:
+  - log
+- package: github.com/SKF/proto
+  subpackages:
+  - iot
+  - pas

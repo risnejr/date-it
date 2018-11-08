@@ -1,0 +1,92 @@
+hash: e335d9e5554795f5603bc6b7a19a27a793e6c0c3785901ec17564fc1127e669d
+updated: 2018-11-08T16:35:47.652381+01:00
+imports:
+- name: github.com/golang/protobuf
+  version: b4deda0973fb4c70b50d226b1af49f3da59f5265
+  subpackages:
+  - proto
+  - ptypes
+  - ptypes/any
+  - ptypes/duration
+  - ptypes/timestamp
+- name: github.com/johntdyer/slack-go
+  version: 95fac1160b220c5abcf8b0ef88e9c3cb213c09f4
+- name: github.com/johntdyer/slackrus
+  version: 3992f319fd0ac349483279ef74742cd787841cba
+- name: github.com/konsorten/go-windows-terminal-sequences
+  version: 5c8c8bd35d3832f5d134ae1e1e375b69a4d25242
+- name: github.com/sirupsen/logrus
+  version: bcd833dfe83d3cebad139e4a29ed79cb2318bf95
+- name: github.com/SKF/go-enlight-sdk
+  version: a209b8db6b2005a7b1245ce57fcd41d0332950bf
+  subpackages:
+  - grpc
+  - services/iot
+  - services/pas
+- name: github.com/SKF/go-utility
+  version: d41190f74b367df1e87d23b9d79d06861421f459
+  subpackages:
+  - log
+- name: github.com/SKF/proto
+  version: 089d85c9f2c598e01736b7a15e3ef098deb9cd22
+  subpackages:
+  - common
+  - iot
+  - pas
+- name: golang.org/x/crypto
+  version: e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa
+  subpackages:
+  - ssh/terminal
+- name: golang.org/x/net
+  version: 03003ca0c849e57b6ea29a4bab8d3cb6e4d568fe
+  subpackages:
+  - context
+  - http/httpguts
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - trace
+- name: golang.org/x/sys
+  version: 66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399
+  subpackages:
+  - unix
+  - windows
+- name: golang.org/x/text
+  version: 6f44c5a2ea40ee3593d98cdcc905cc1fdaa660e2
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
+- name: google.golang.org/genproto
+  version: 5fc9ac5403620be16bcdb0c8e7644b1178472c3b
+  subpackages:
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: 7a6a684ca69eb4cae85ad0a484f2e531598c047b
+  subpackages:
+  - balancer
+  - balancer/base
+  - balancer/roundrobin
+  - channelz
+  - codes
+  - connectivity
+  - credentials
+  - encoding
+  - encoding/proto
+  - grpclb/grpc_lb_v1/messages
+  - grpclog
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - resolver
+  - resolver/dns
+  - resolver/passthrough
+  - stats
+  - status
+  - tap
+  - transport
+testImports: []

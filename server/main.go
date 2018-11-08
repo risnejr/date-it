@@ -10,13 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/SKF/go-enlight-sdk/services/pas"
-	"github.com/SKF/go-utility/log"
-
 	"github.com/SKF/go-enlight-sdk/grpc"
 	"github.com/SKF/go-enlight-sdk/services/iot"
-	iotapi "github.com/SKF/go-enlight-sdk/services/iot/iotgrpcapi"
-	"github.com/SKF/go-enlight-sdk/services/pas/pasapi"
+	"github.com/SKF/go-enlight-sdk/services/pas"
+	"github.com/SKF/go-utility/log"
+	iotapi "github.com/SKF/proto/iot"
+	pasapi "github.com/SKF/proto/pas"
 )
 
 // Config map[functional_location_name]map[asset_name]map[point_name]point_id
@@ -67,7 +66,6 @@ func DialIoT() iot.IoTClient {
 		log.WithError(err).Error("client.DeepPing")
 		return nil
 	}
-
 	return client
 }
 
