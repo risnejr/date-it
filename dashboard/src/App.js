@@ -2,6 +2,7 @@
 import React, { Component } from "react";
 import "./App.css";
 import Trend from "./Components/Trend";
+import Live from "./Components/Live";
 
 class App extends Component<{}> {
   uuid: string | null;
@@ -13,7 +14,14 @@ class App extends Component<{}> {
   }
 
   render() {
-    return <Trend uuid={this.uuid} />;
+    return (
+      <div className="flex-grid">
+        <Trend class="grid-item" uuid={this.uuid} />
+        <Trend class="grid-item" uuid={this.uuid} />
+        <Live class="grid-item" uuid={this.uuid} />
+        <Live class="grid-item" uuid={this.uuid} />
+      </div>
+    );
   }
 }
 

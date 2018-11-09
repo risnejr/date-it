@@ -1,7 +1,8 @@
 // @flow
 import React, { Component } from "react";
-import { LineChart, Line, YAxis } from "recharts";
+import { ResponsiveContainer, LineChart, Line, YAxis, XAxis } from "recharts";
 import EventSource from "./EventSource.js";
+import { Card } from "@material-ui/core";
 
 type Props = {
   uuid: string | null
@@ -35,11 +36,10 @@ class Trend extends Component<Props, State> {
     let data: Object = {};
 
     source.onmessage = event => {
-      if (!(typeof event.data === typeof "")) {
+      if (!(typeof event.data === "string")) {
         return;
       }
-      //$FlowFixMe
-      data = JSON.parse(event.data); //
+      data = JSON.parse(event.data);
       data.node_data.coordinate.x = new Date(data.node_data.coordinate.x);
       this.setState({
         coordinates: [
@@ -59,8 +59,8 @@ class Trend extends Component<Props, State> {
 
   render() {
     return (
-      <div className="App">
-        <LineChart width={1600} height={850} data={this.state.coordinates}>
+      <ResponsiveContainer width="50%" height="50%">
+        <LineChart data={this.state.coordinates}>
           <Line
             strokeWidth={3}
             type="basis"
@@ -69,9 +69,9 @@ class Trend extends Component<Props, State> {
             animationDuration={2000}
             dot={false}
           />
-          <YAxis type="number" domain={[18, 30]} />
+          <YAxis axisLine={false} type="number" domain={[18, 30]} />
         </LineChart>
-      </div>
+      </ResponsiveContainer>
     );
   }
 }
