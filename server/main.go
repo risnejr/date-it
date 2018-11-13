@@ -166,21 +166,26 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("Client %v disconnected from the feed...\n\n", r.RemoteAddr)
 			return
 		default:
-			latestInput := iotapi.GetLatestNodeDataInput{NodeId: uuid, ContentType: 1}
-			latestOutput, err := iotClient.GetLatestNodeData(latestInput)
+			nodeDataInput := iotapi.GetLatestNodeDataInput{NodeId: uuid, ContentType: 1}
+			nodeDataOutput, err := iotClient.GetLatestNodeData(nodeDataInput)
 			if err != nil {
 				log.Error(err)
 			}
-			pointData := latestOutput.DataPoint
-			createdAt := latestOutput.CreatedAt
+			pointData := nodeDataOutput.DataPoint
+			createdAt := nodeDataOutput.CreatedAt
 
-			latestAlarmInput := pasapi.GetPointAlarmStatusInput{NodeId: uuid}
-			latestAlarm, err := pasClient.GetPointAlarmStatus(latestAlarmInput)
+			alarmStatusInput := pasapi.GetPointAlarmStatusInput{NodeId: uuid}
+			alarmStatus, err := pasClient.GetPointAlarmStatus(alarmStatusInput)
 			if err != nil {
 				log.Error(err)
 			}
 
-			jsonData := map[string]interface{}{"node_data": pointData, "alarm_status": latestAlarm}
+			alarmThreshold, err := pasClient.GetPointAlarmThreshold(uuid)
+			if err != nil {
+				log.Error(err)
+			}
+
+			jsonData := map[string]interface{}{"node_data": pointData, "alarm_status": alarmStatus, "alarm_threshold": alarmThreshold}
 			sseData, _ := json.Marshal(jsonData)
 			if createdAt > createdAtTmp {
 				if *verbose {

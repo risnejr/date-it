@@ -1,8 +1,14 @@
 // @flow
 import React, { Component } from "react";
-import { ResponsiveContainer, LineChart, Line, YAxis, XAxis } from "recharts";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  YAxis,
+  ReferenceLine
+} from "recharts";
 import EventSource from "./EventSource.js";
-import { Card } from "@material-ui/core";
+import { Paper } from "@material-ui/core";
 
 type Props = {
   uuid: string | null
@@ -14,14 +20,18 @@ type Coordinate = {
 };
 
 type State = {
-  coordinates: Array<Coordinate>
+  coordinates: Array<Coordinate>,
+  danger: number,
+  warning: number
 };
 
 class Trend extends Component<Props, State> {
   constructor() {
     super();
     this.state = {
-      coordinates: []
+      coordinates: [],
+      danger: 0,
+      warning: 0
     };
   }
 
@@ -47,11 +57,17 @@ class Trend extends Component<Props, State> {
           data.node_data.coordinate
         ]
       });
+      if (data.alarm_status !== 0) {
+        this.setState({
+          danger: data.alarm_threshold.overall.outer_high.value,
+          warning: data.alarm_threshold.overall.inner_high.value
+        });
+      }
     };
   }
 
   shiftIfBig(array: Array<Coordinate>): Array<Coordinate> {
-    if (array.length >= 100) {
+    if (array.length >= 10) {
       array.shift();
     }
     return array;
@@ -59,19 +75,40 @@ class Trend extends Component<Props, State> {
 
   render() {
     return (
-      <ResponsiveContainer width="50%" height="50%">
-        <LineChart data={this.state.coordinates}>
-          <Line
-            strokeWidth={3}
-            type="basis"
-            dataKey="y"
-            stroke="#8884d8"
-            animationDuration={2000}
-            dot={false}
-          />
-          <YAxis axisLine={false} type="number" domain={[18, 30]} />
-        </LineChart>
-      </ResponsiveContainer>
+      <Paper style={{ paddingRight: "5%" }}>
+        <ResponsiveContainer height={500}>
+          <LineChart data={this.state.coordinates}>
+            <Line
+              strokeWidth={5}
+              type="basis"
+              dataKey="y"
+              stroke="#222f3e"
+              animationDuration={2000}
+              dot={false}
+            />
+            <YAxis
+              axisLine={false}
+              type="number"
+              domain={["auto", "auto"]}
+              tickFormatter={tick => Math.round(tick * 1000) / 1000}
+            />
+            {this.state.danger !== -1 && (
+              <ReferenceLine
+                y={this.state.danger}
+                stroke="#ff6b6b"
+                strokeDasharray="3 3"
+              />
+            )}
+            {this.state.warning !== -1 && (
+              <ReferenceLine
+                y={this.state.warning}
+                stroke="#feca57"
+                strokeDasharray="3 3"
+              />
+            )}
+          </LineChart>
+        </ResponsiveContainer>
+      </Paper>
     );
   }
 }
