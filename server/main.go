@@ -16,6 +16,7 @@ import (
 	"github.com/SKF/go-utility/log"
 	iotapi "github.com/SKF/proto/iot"
 	pasapi "github.com/SKF/proto/pas"
+	"google.golang.org/grpc/status"
 )
 
 // Config map[functional_location_name]map[asset_name]map[point_name]point_id
@@ -170,6 +171,12 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 			nodeDataOutput, err := iotClient.GetLatestNodeData(nodeDataInput)
 			if err != nil {
 				log.Error(err)
+				st, _ := status.FromError(err)
+				// Retry if status code is Unavailable (14)
+				// TODO add exponential backoff and retry
+				if st.Code() == 14 {
+					iotClient = DialIoT()
+				}
 			}
 			pointData := nodeDataOutput.DataPoint
 			createdAt := nodeDataOutput.CreatedAt
@@ -178,11 +185,23 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 			alarmStatus, err := pasClient.GetPointAlarmStatus(alarmStatusInput)
 			if err != nil {
 				log.Error(err)
+				st, _ := status.FromError(err)
+				// Retry if status code is Unavailable (14)
+				// TODO add exponential backoff and retry
+				if st.Code() == 14 {
+					pasClient = DialPAS()
+				}
 			}
 
 			alarmThreshold, err := pasClient.GetPointAlarmThreshold(uuid)
 			if err != nil {
 				log.Error(err)
+				st, _ := status.FromError(err)
+				// Retry if status code is Unavailable (14)
+				// TODO add exponential backoff and retry
+				if st.Code() == 14 {
+					pasClient = DialPAS()
+				}
 			}
 
 			jsonData := map[string]interface{}{"node_data": pointData, "alarm_status": alarmStatus, "alarm_threshold": alarmThreshold}
@@ -196,8 +215,8 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 				createdAtTmp = createdAt
 				id++
 			}
+			time.Sleep(time.Second)
 		}
-		time.Sleep(time.Second)
 	}
 }
 
