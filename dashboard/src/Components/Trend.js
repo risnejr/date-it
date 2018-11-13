@@ -8,10 +8,11 @@ import {
   ReferenceLine
 } from "recharts";
 import EventSource from "./EventSource.js";
-import { Paper } from "@material-ui/core";
+import { Paper, Typography, Divider } from "@material-ui/core";
 
 type Props = {
-  uuid: string | null
+  uuid: string | null,
+  header: string
 };
 
 type Coordinate = {
@@ -57,7 +58,10 @@ class Trend extends Component<Props, State> {
           data.node_data.coordinate
         ]
       });
-      if (data.alarm_status !== 0) {
+      if (
+        data.alarm_status !== 0 &&
+        typeof data.alarm_threshold.overall === "object"
+      ) {
         this.setState({
           danger: data.alarm_threshold.overall.outer_high.value,
           warning: data.alarm_threshold.overall.inner_high.value
@@ -67,7 +71,7 @@ class Trend extends Component<Props, State> {
   }
 
   shiftIfBig(array: Array<Coordinate>): Array<Coordinate> {
-    if (array.length >= 10) {
+    if (array.length >= 100) {
       array.shift();
     }
     return array;
@@ -76,14 +80,17 @@ class Trend extends Component<Props, State> {
   render() {
     return (
       <Paper style={{ paddingRight: "5%" }}>
-        <ResponsiveContainer height={500}>
+        <Typography variant="display1" align="center">
+          {this.props.header}
+        </Typography>
+        <ResponsiveContainer height={700}>
           <LineChart data={this.state.coordinates}>
             <Line
               strokeWidth={5}
               type="basis"
               dataKey="y"
               stroke="#222f3e"
-              animationDuration={2000}
+              animationDuration={500}
               dot={false}
             />
             <YAxis
@@ -94,6 +101,7 @@ class Trend extends Component<Props, State> {
             />
             {this.state.danger !== -1 && (
               <ReferenceLine
+                strokeWidth={3}
                 y={this.state.danger}
                 stroke="#ff6b6b"
                 strokeDasharray="3 3"
@@ -101,6 +109,7 @@ class Trend extends Component<Props, State> {
             )}
             {this.state.warning !== -1 && (
               <ReferenceLine
+                strokeWidth={3}
                 y={this.state.warning}
                 stroke="#feca57"
                 strokeDasharray="3 3"

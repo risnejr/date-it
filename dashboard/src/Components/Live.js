@@ -58,7 +58,7 @@ class Live extends Component<Props, State> {
           break;
       }
       this.setState({
-        value: data.node_data.coordinate.y,
+        value: Math.round(data.node_data.coordinate.y * 100) / 100,
         alarm: alarm
       });
     };

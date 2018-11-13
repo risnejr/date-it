@@ -16,10 +16,16 @@ class App extends Component<{}> {
         spacing={24}
       >
         <Grid item xs={6}>
-          <Trend uuid="93c433f0-6a2e-4e4a-bfc3-52a0024b6eff" />
+          <Trend
+            uuid="93c433f0-6a2e-4e4a-bfc3-52a0024b6eff"
+            header="Temperature last 30 minutes"
+          />
         </Grid>
         <Grid item xs={6}>
-          <Trend uuid="93c433f0-6a2e-4e4a-bfc3-52a0024b6eff" />
+          <Trend
+            uuid="93c433f0-6a2e-4e4a-bfc3-52a0024b6eff"
+            header="Temperature last 30 minutes"
+          />
         </Grid>
 
         <Grid item xs={3}>
